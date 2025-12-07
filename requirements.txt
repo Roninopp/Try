@@ -1,6 +1,7 @@
-pyrogram>=2.0.0             # Core bot library
-pyrogram-calls              # New voice chat library
-yt-dlp
+pyrogram==1.4.16
+py-tgcalls==0.8.6
 requests
 uvicorn
 fastapi
+yt-dlp
+# You can add other utilities like dnspython, tgcrypto, etc. from the Yukki list if needed
