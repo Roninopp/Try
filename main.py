@@ -1,9 +1,7 @@
-# main.py
+# main.py - Telethon
 # The core Telegram bot logic with the /play command and Voice Chat integration.
 
-import os
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from telethon import TelegramClient, events
 from pytgcalls import PyTgCalls, StreamType
 from pytgcalls.types import AudioPiped
 import requests
@@ -12,23 +10,17 @@ from config import API_ID, API_HASH, BOT_TOKEN, PROXY_HOST_IP, PROXY_HOST_PORT, 
 # --- Initialize the Clients ---
 
 # 1. The Bot Client (for commands and messages)
-bot_app = Client(
-    "music_bot_session",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
-)
+bot_app = TelegramClient('telethon_bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
 # 2. The UserBot Client (for joining voice chats)
-user_app = Client(
-    USER_SESSION_STRING, # Pyrogram uses the session string directly
-    api_id=API_ID,
-    api_hash=API_HASH
+user_app = TelegramClient(
+    USER_SESSION_STRING, # Use the string session directly
+    API_ID, 
+    API_HASH
 )
 
-# 3. The PyTgCalls Client (manages the streaming logic)
+# 3. The PyTgCalls Client (manages the streaming logic - uses UserBot)
 pytgcalls_app = PyTgCalls(user_app)
-
 
 # --- Define the Proxy Endpoint ---
 PROXY_URL_BASE = f"http://{PROXY_HOST_IP}:{PROXY_HOST_PORT}/stream_audio"
@@ -40,69 +32,68 @@ def get_youtube_url(query: str):
     return None
 
 # --- /play Command Handler ---
-@bot_app.on_message(filters.command("play") & filters.group)
-async def play_command(client: Client, message: Message):
+@bot_app.on(events.NewMessage(pattern='/play (.*)', chats=-1))
+async def play_command(event):
     """Handles the /play command in a group chat."""
     
     if not USER_SESSION_STRING:
-        await message.reply_text("❌ **ERROR:** The `USER_SESSION_STRING` in `config.py` is empty. Run `userbot_session.py` and update it.")
+        await event.reply("❌ **ERROR:** The `USER_SESSION_STRING` in `config.py` is empty. Run `userbot_session.py` and update it.")
         return
 
-    if len(message.command) < 2:
-        await message.reply_text("Usage: `/play <YouTube URL>`")
-        return
-
-    query = " ".join(message.command[1:])
+    query = event.pattern_match.group(1).strip()
     youtube_url = get_youtube_url(query)
     
     if not youtube_url:
-        await message.reply_text("Please provide a direct YouTube URL for now. (e.g., `/play https://youtu.be/dQw4w9WgXcQ`)")
+        await event.reply("Please provide a direct YouTube URL for now. (e.g., `/play https://youtu.be/dQw4w9WgXcQ`)")
         return
         
-    status_msg = await message.reply_text(f"🎧 Searching and preparing stream for: `{youtube_url}`...")
+    status_msg = await event.reply(f"🎧 Searching and preparing stream for: `{youtube_url}`...")
     
-    chat_id = message.chat.id
+    chat_id = event.chat_id
     
     try:
-        # 1. JOIN THE VOICE CHAT (using the UserBot)
+        # 1. Start the UserBot and PyTgCalls if not started (Telethon way)
+        if not user_app.is_connected():
+            await user_app.start()
+        if not pytgcalls_app.is_connected:
+             await pytgcalls_app.start()
+             
+        # 2. JOIN THE VOICE CHAT
         await pytgcalls_app.join_group_call(
             chat_id,
             AudioPiped(
-                # 2. Pass the stream to your custom proxy server!
                 f"{PROXY_URL_BASE}?url={youtube_url}",
-                # 3. Use raw FFmpeg input for maximum compatibility (AudioPiped)
                 StreamType.pulse
-            ),
-            # You can set this to True if you want the UserBot to be muted when joining
-            mute=False
+            )
         )
 
-        await status_msg.edit_text(f"▶️ **Started Playing** in Voice Chat! \nTitle: `{youtube_url}`")
+        await status_msg.edit(f"▶️ **Started Playing** in Voice Chat! \nTitle: `{youtube_url}`")
         
     except Exception as e:
         print(f"Error during voice chat operation: {e}")
-        await status_msg.edit_text(f"❌ **Failed to Play Music!** \nDetails: `{e}` \n\n*Ensure the UserBot is an Admin with 'Manage Voice Chat' permissions.*")
+        await status_msg.edit(f"❌ **Failed to Play Music!** \nDetails: `{e}` \n\n*Ensure the UserBot is an Admin with 'Manage Voice Chat' permissions.*")
 
 # --- /leavevc Command Handler ---
-@bot_app.on_message(filters.command("leavevc") & filters.group)
-async def leave_command(client: Client, message: Message):
+@bot_app.on(events.NewMessage(pattern='/leavevc', chats=-1))
+async def leave_command(event):
     """Handles the /leavevc command."""
     try:
-        await pytgcalls_app.leave_group_call(message.chat.id)
-        await message.reply_text("👋 Left the Voice Chat.")
+        await pytgcalls_app.leave_group_call(event.chat_id)
+        await event.reply("👋 Left the Voice Chat.")
     except Exception:
-        await message.reply_text("The bot is not currently in a Voice Chat.")
+        await event.reply("The bot is not currently in a Voice Chat.")
 
 
-# --- Start the Clients ---
-async def start_clients():
-    await user_app.start()
-    await bot_app.start()
-    await pytgcalls_app.start()
-    print("Clients started successfully! Bot is ready.")
-    await bot_app.idle() # Keep the bot running
-
+# --- Start the Bot ---
 if __name__ == "__main__":
     print("Starting Telegram Bot and Voice Chat Clients...")
-    import asyncio
-    asyncio.run(start_clients())
+    try:
+        # Run all clients concurrently
+        user_app.loop.run_until_complete(pytgcalls_app.start())
+        print("Voice Chat Client started successfully!")
+        
+        print("Bot Client started successfully!")
+        bot_app.run_until_disconnected()
+
+    except Exception as e:
+        print(f"An error occurred during startup: {e}")
