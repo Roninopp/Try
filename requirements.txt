@@ -1,6 +1,6 @@
-pyrogram>=2.0.0
-yt-dlp
-requests
-uvicorn
-fastapi
-pytgcalls[pyrogram] # <-- ADDED THE [pyrogram]
+telethon>=1.0                 # The core library
+yt-dlp                        # Audio fetching (stays the same)
+requests                      # Proxy requests (stays the same)
+uvicorn                       # Proxy server (stays the same)
+fastapi                       # Proxy server framework (stays the same)
+pytgcalls[telethon]
