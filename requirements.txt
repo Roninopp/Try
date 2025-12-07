@@ -1,10 +1,6 @@
-pyrogram>=2.0.0             # Telegram Bot API (for the bot)
-yt-dlp                      # To download/stream audio from YouTube (for the proxy)
-requests                    # For making web requests (used in the proxy)
-uvicorn                     # ASGI server to run the proxy script
-fastapi                     # Web framework for the proxy script
-
-# Voice Chat Dependencies
-pytgcalls                   # For Telegram Voice Chat functions
-tgcalls                     # The C++ binding for voice chat
-ffmpeg
+pyrogram>=2.0.0
+yt-dlp
+requests
+uvicorn
+fastapi
+pytgcalls[pyrogram] # <-- ADDED THE [pyrogram]
