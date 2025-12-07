@@ -1,7 +1,9 @@
 pyrogram==1.4.16
 py-tgcalls==0.8.6
+yt-dlp
 requests
 uvicorn
 fastapi
-yt-dlp
-# You can add other utilities like dnspython, tgcrypto, etc. from the Yukki list if needed
+# Add the core dependencies that ensure speed and stability:
+tgcrypto
+pyaes==1.6.1
