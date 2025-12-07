@@ -1,29 +1,39 @@
-# userbot_session.py
-# Run this file ONCE to generate the session string.
+#!/usr/bin/env python3
+"""
+Session String Generator for Pyrogram
+This will generate a new USER_SESSION_STRING for your config.py
+"""
 
 from pyrogram import Client
-from config import API_ID, API_HASH
 
-# We use the same API_ID and API_HASH from your config.py
-# The session will be saved as 'user_session.session'
+# Replace these with your actual values from config.py
+API_ID = 12345678  # Your API_ID
+API_HASH = "your_api_hash_here"  # Your API_HASH
 
 async def generate_session():
-    print("--- UserBot Session Generator ---")
+    print("=" * 50)
+    print("Session String Generator")
+    print("=" * 50)
     
-    # Client will prompt for phone number, login code, and 2FA password
-    async with Client(":user_session:", api_id=API_ID, api_hash=API_HASH) as app:
+    async with Client(
+        "my_account",
+        api_id=API_ID,
+        api_hash=API_HASH
+    ) as app:
         session_string = await app.export_session_string()
-        print("\n✅ Session String Generated Successfully!")
-        print("------------------------------------------")
+        
+        print("\n✅ SESSION STRING GENERATED SUCCESSFULLY!\n")
+        print("Copy this string and paste it in your config.py as USER_SESSION_STRING:\n")
+        print("-" * 50)
         print(session_string)
-        print("------------------------------------------")
-        print("\n☝️ COPY this string and PASTE it into USER_SESSION_STRING in your config.py file.")
-        print("A file named 'user_session.session' has also been created.")
+        print("-" * 50)
+        print("\n⚠️ Keep this string SECRET! Don't share it with anyone.")
 
 if __name__ == "__main__":
-    try:
-        # We need to run the async function
-        import asyncio
-        asyncio.run(generate_session())
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    import asyncio
+    
+    print("\n📱 You will need to enter:")
+    print("   1. Your phone number (with country code, e.g., +1234567890)")
+    print("   2. The verification code sent to your Telegram\n")
+    
+    asyncio.run(generate_session())
