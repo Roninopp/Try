@@ -1,5 +1,5 @@
-pyrogram==2.0.106
-py-tgcalls==2.2.8
+pyrogram==1.4.16
+py-tgcalls==0.8.6
 tgcrypto==1.2.5
 yt-dlp
 requests
