@@ -1,9 +1,9 @@
-pyrogram==1.4.16
-py-tgcalls>=2.0.0
+pyrogram==2.0.106
+py-tgcalls==2.2.8
+tgcrypto==1.2.5
 yt-dlp
 requests
 uvicorn
 fastapi
 # Add the core dependencies that ensure speed and stability:
-tgcrypto
 pyaes==1.6.1
