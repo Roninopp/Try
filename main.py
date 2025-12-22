@@ -1,11 +1,9 @@
 import asyncio
-from pyrogram.errors import Forbidden
-# Then catch Forbidden instead of GroupcallForbidden
-from pyrogram import Client, filters, idle
+from pyrogram import Client, filters
 from pyrogram.types import Message
-from pytgcalls import PyTgCalls
-from pytgcalls.types import MediaStream
-import requests
+# v0.8.6 specific imports
+from pytgcalls import GroupCallFactory
+from pytgcalls.types.input_stream import InputStream, InputAudioStream
 
 # --- Configuration Imports ---
 from config import API_ID, API_HASH, BOT_TOKEN, PROXY_HOST_IP, PROXY_HOST_PORT, USER_SESSION_STRING
@@ -15,7 +13,7 @@ PROXY_URL_BASE = f"http://{PROXY_HOST_IP}:{PROXY_HOST_PORT}/stream_audio"
 
 # --- Initialize the Clients ---
 
-# 1. The Bot Client (for commands)
+# 1. The Bot Client
 bot_app = Client(
     "music_bot_session",
     api_id=API_ID,
@@ -23,17 +21,18 @@ bot_app = Client(
     bot_token=BOT_TOKEN
 )
 
-# 2. The UserBot Client (for voice chat)
+# 2. The UserBot Client
 user_app = Client(
-    "user_bot_session", # In v2, session name is preferred over raw string here
-    session_string=USER_SESSION_STRING,
+    USER_SESSION_STRING,
     api_id=API_ID,
     api_hash=API_HASH
 )
 
-# 3. The PyTgCalls Client
-# Link it to the UserBot (user_app)
-calls_app = PyTgCalls(user_app)
+# 3. The PyTgCalls Client (The v0.8.6 Legacy Way)
+# We create a factory linked to the user_app
+group_call_factory = GroupCallFactory(user_app)
+# This client will handle joining and streaming
+calls_app = group_call_factory.get_file_group_call()
 
 def get_youtube_url(query: str):
     if "youtube.com" in query or "youtu.be" in query:
@@ -65,10 +64,14 @@ async def play_command(client: Client, message: Message):
         # Construct proxy URL
         final_proxy_stream_url = f"{PROXY_URL_BASE}?url={youtube_url}"
         
-        # NEW SYNTAX for v2.2.8: Use .play() and MediaStream()
-        await calls_app.play(
+        # v0.8.6 SYNTAX: Use join_group_call with InputStream and InputAudioStream
+        await calls_app.join_group_call(
             chat_id,
-            MediaStream(final_proxy_stream_url)
+            InputStream(
+                InputAudioStream(
+                    final_proxy_stream_url,
+                ),
+            ),
         )
 
         await status_msg.edit_text(f"▶️ **Started Playing**! \nStream: `{youtube_url}`")
@@ -80,8 +83,8 @@ async def play_command(client: Client, message: Message):
 @bot_app.on_message(filters.command("leavevc") & filters.group)
 async def leave_command(client: Client, message: Message):
     try:
-        # NEW SYNTAX: Use .stop_playout() or just leave
-        await calls_app.leave_call(message.chat.id)
+        # v0.8.6 SYNTAX: leave_group_call
+        await calls_app.leave_group_call()
         await message.reply_text("👋 Left.")
     except Exception:
         await message.reply_text("Not in a Voice Chat.")
@@ -90,10 +93,12 @@ async def leave_command(client: Client, message: Message):
 async def start_clients():
     await bot_app.start()
     await user_app.start()
-    await calls_app.start() # Start pytgcalls AFTER pyrogram
+    # Note: In v0.8.6, the calls_app usually starts automatically upon joining,
+    # but we keep the structure consistent.
     
-    print("Bot is LIVE!")
-    await idle() # Pyrogram's idle blocks execution correctly
+    print("Bot is LIVE on Legacy v0.8.6!")
+    # Use standard idle to keep both running
+    await asyncio.gather(bot_app.idle(), user_app.idle())
 
 if __name__ == "__main__":
     asyncio.run(start_clients())
