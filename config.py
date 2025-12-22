@@ -3,7 +3,7 @@
 # --- Telegram Bot Configuration ---
 API_ID = 21502134          # Your Telegram API ID (Use the SAME one for both Bot and User)
 API_HASH = "e09a3f453b841ca4d1823d3b4004672d"  # Your Telegram API Hash (Use the SAME one for both Bot and User)
-BOT_TOKEN = "8341511264:AAFjNIOYE5NbABPloFbz-r989l2ySRUs988" # Your Bot's Token from BotFather
+BOT_TOKEN = "8266359988:AAENT2VkxH5rTTOh71w_mXG1epq8b4hSbTo" # Your Bot's Token from BotFather
 
 # --- UserBot Configuration (REQUIRED for Voice Chat) ---
 # THIS IS YOUR ACCOUNT'S SESSION STRING!
