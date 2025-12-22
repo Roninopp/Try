@@ -1,4 +1,6 @@
 import asyncio
+from pyrogram.errors import Forbidden
+# Then catch Forbidden instead of GroupcallForbidden
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message
 from pytgcalls import PyTgCalls
