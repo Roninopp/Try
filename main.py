@@ -2,8 +2,13 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-# CORRECT Legacy Imports for py-tgcalls 0.8.6
-from pytgcalls.group_call_factory import GroupCallFactory 
+# Try importing from the two common locations for v0.8.6
+try:
+    from pytgcalls import GroupCallFactory
+except ImportError:
+    from pytgcalls.group_call_factory import GroupCallFactory
+
+# Correct Legacy Imports for audio streams
 from pytgcalls.types.input_stream import InputStream, InputAudioStream
 
 # --- Configuration ---
@@ -26,27 +31,29 @@ async def play_command(client: Client, message: Message):
         return await message.reply_text("Usage: `/play <URL>`")
 
     youtube_url = message.command[1]
-    status_msg = await message.reply_text("🎧 Preparing...")
+    status_msg = await message.reply_text("🎧 Preparing stream...")
     
     try:
+        # Construct proxy URL
         final_stream_url = f"{PROXY_URL_BASE}?url={youtube_url}"
         
-        # Legacy v0.8.6 Syntax
+        # Legacy v0.8.6 Syntax: join_group_call with InputStream
         await calls_app.join_group_call(
             message.chat.id,
             InputStream(
                 InputAudioStream(final_stream_url)
             )
         )
-        await status_msg.edit_text(f"▶️ Playing: {youtube_url}")
+        await status_msg.edit_text(f"▶️ **Playing**: {youtube_url}")
     except Exception as e:
-        await status_msg.edit_text(f"❌ Error: {e}")
+        await status_msg.edit_text(f"❌ **Error**: `{e}`")
 
 # --- Startup ---
 async def main():
     await bot_app.start()
     await user_app.start()
-    print("Bot is LIVE (Legacy Mode)!")
+    print("Bot is LIVE (Legacy Mode) on Python 3.9!")
+    # Use gather to keep both clients running
     await asyncio.gather(bot_app.idle(), user_app.idle())
 
 if __name__ == "__main__":
