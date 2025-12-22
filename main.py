@@ -6,7 +6,7 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pytgcalls import PyTgCalls # CORRECT import for the installed library
-from pytgcalls.types import AudioPiped
+frfrom pytgcalls.types import MediaStream
 import requests
 
 # --- Configuration Imports ---
