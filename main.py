@@ -6,7 +6,7 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pytgcalls import PyTgCalls # CORRECT import for the installed library
-frfrom pytgcalls.types import MediaStream
+from pytgcalls.types import MediaStream
 import requests
 
 # --- Configuration Imports ---
